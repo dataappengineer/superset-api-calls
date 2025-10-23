@@ -1,0 +1,695 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "Superset API - Collection Completa",
+		"description": "Collection completa per testare tutte le API di Apache Superset\nEquivalente agli script PowerShell nel repository.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Autenticazione",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Salva access token per richieste successive",
+									"if (pm.response.code === 200) {",
+									"    var responseJson = pm.response.json();",
+									"    pm.environment.set(\"access_token\", responseJson.access_token);",
+									"    console.log(\"Login successful! Token saved.\");",
+									"}",
+									"",
+									"pm.test(\"Login successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().access_token).to.be.a('string');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{username}}\",\n    \"password\": \"{{password}}\",\n    \"provider\": \"db\",\n    \"refresh\": true\n}"
+						},
+						"url": {
+							"raw": "{{superset_url}}/api/v1/security/login",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"security",
+								"login"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Discovery",
+			"item": [
+				{
+					"name": "Get Databases",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Salva primo database disponibile",
+									"if (pm.response.code === 200) {",
+									"    var databases = pm.response.json().result;",
+									"    if (databases.length > 0) {",
+									"        pm.environment.set(\"database_id\", databases[0].id);",
+									"        pm.environment.set(\"database_name\", databases[0].database_name);",
+									"        console.log(\"Database saved: \" + databases[0].database_name + \" (ID: \" + databases[0].id + \")\");",
+									"    }",
+									"}",
+									"",
+									"pm.test(\"Databases retrieved\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().result).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{superset_url}}/api/v1/database/",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"database",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Tables",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Salva prima tabella disponibile",
+									"if (pm.response.code === 200) {",
+									"    var tables = pm.response.json().result;",
+									"    if (tables.length > 0) {",
+									"        pm.environment.set(\"table_name\", tables[0]);",
+									"        console.log(\"Table saved: \" + tables[0]);",
+									"    }",
+									"}",
+									"",
+									"pm.test(\"Tables retrieved\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{superset_url}}/api/v1/database/{{database_id}}/table_metadata/",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"database",
+								"{{database_id}}",
+								"table_metadata",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Datasets",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{superset_url}}/api/v1/dataset/",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"dataset",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Dashboards",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{superset_url}}/api/v1/dashboard/",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"dashboard",
+								""
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Creazione Dataset",
+			"item": [
+				{
+					"name": "Create Dataset da Tabella",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Salva ID dataset creato",
+									"if (pm.response.code === 201) {",
+									"    var responseJson = pm.response.json();",
+									"    pm.environment.set(\"dataset_id\", responseJson.id);",
+									"    console.log(\"Dataset created with ID: \" + responseJson.id);",
+									"}",
+									"",
+									"pm.test(\"Dataset created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    pm.expect(pm.response.json().id).to.be.a('number');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"database\": {{database_id}},\n    \"table_name\": \"{{table_name}}\",\n    \"schema\": null,\n    \"owners\": [1]\n}"
+						},
+						"url": {
+							"raw": "{{superset_url}}/api/v1/dataset/",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"dataset",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Dataset Virtuale",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Salva ID dataset virtuale",
+									"if (pm.response.code === 201) {",
+									"    var responseJson = pm.response.json();",
+									"    pm.environment.set(\"virtual_dataset_id\", responseJson.id);",
+									"    console.log(\"Virtual Dataset created with ID: \" + responseJson.id);",
+									"}",
+									"",
+									"pm.test(\"Virtual Dataset created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    pm.expect(pm.response.json().sql).to.not.be.null;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"database\": {{database_id}},\n    \"schema\": null,\n    \"sql\": \"SELECT 'test' as test_column, 1 as test_number, date('now') as test_date\",\n    \"table_name\": \"virtual_dataset_{{$timestamp}}\",\n    \"owners\": [1]\n}"
+						},
+						"url": {
+							"raw": "{{superset_url}}/api/v1/dataset/",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"dataset",
+								""
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Creazione Grafici",
+			"item": [
+				{
+					"name": "Chart - Tabella",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Chart created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    pm.expect(pm.response.json().id).to.be.a('number');",
+									"});",
+									"",
+									"if (pm.response.code === 201) {",
+									"    console.log(\"Table chart created with ID: \" + pm.response.json().id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"datasource_id\": {{dataset_id}},\n    \"datasource_type\": \"table\",\n    \"slice_name\": \"Tabella Test - {{$timestamp}}\",\n    \"viz_type\": \"table\",\n    \"params\": \"{\\\"datasource\\\":{\\\"id\\\":{{dataset_id}},\\\"type\\\":\\\"table\\\"},\\\"viz_type\\\":\\\"table\\\",\\\"query_mode\\\":\\\"aggregate\\\",\\\"groupby\\\":[],\\\"metrics\\\":[\\\"count\\\"],\\\"adhoc_filters\\\":[],\\\"row_limit\\\":100,\\\"order_desc\\\":true}\"\n}"
+						},
+						"url": {
+							"raw": "{{superset_url}}/api/v1/chart/",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"chart",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Chart - Grafico a Torta",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Pie chart created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"if (pm.response.code === 201) {",
+									"    console.log(\"Pie chart created with ID: \" + pm.response.json().id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"datasource_id\": {{dataset_id}},\n    \"datasource_type\": \"table\",\n    \"slice_name\": \"Grafico a Torta - {{$timestamp}}\",\n    \"viz_type\": \"pie\",\n    \"params\": \"{\\\"datasource\\\":{\\\"id\\\":{{dataset_id}},\\\"type\\\":\\\"table\\\"},\\\"viz_type\\\":\\\"pie\\\",\\\"groupby\\\":[],\\\"metric\\\":\\\"count\\\",\\\"adhoc_filters\\\":[],\\\"row_limit\\\":50,\\\"color_scheme\\\":\\\"bnbColors\\\",\\\"donut\\\":false,\\\"show_labels\\\":true,\\\"labels_outside\\\":false,\\\"outerRadius\\\":70,\\\"innerRadius\\\":30}\"\n}"
+						},
+						"url": {
+							"raw": "{{superset_url}}/api/v1/chart/",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"chart",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Chart - Big Number",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Big Number chart created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"if (pm.response.code === 201) {",
+									"    console.log(\"Big Number chart created with ID: \" + pm.response.json().id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"datasource_id\": {{dataset_id}},\n    \"datasource_type\": \"table\",\n    \"slice_name\": \"Big Number - {{$timestamp}}\",\n    \"viz_type\": \"big_number_total\",\n    \"params\": \"{\\\"datasource\\\":{\\\"id\\\":{{dataset_id}},\\\"type\\\":\\\"table\\\"},\\\"viz_type\\\":\\\"big_number_total\\\",\\\"metric\\\":\\\"count\\\",\\\"adhoc_filters\\\":[],\\\"header_font_size\\\":0.4,\\\"subheader_font_size\\\":0.15,\\\"y_axis_format\\\":\\\"SMART_NUMBER\\\",\\\"time_format\\\":\\\"smart_date\\\",\\\"extra_form_data\\\":{},\\\"dashboards\\\":[],\\\"annotation_layers\\\":[]}\"\n}"
+						},
+						"url": {
+							"raw": "{{superset_url}}/api/v1/chart/",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"chart",
+								""
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Dashboard",
+			"item": [
+				{
+					"name": "Create Dashboard",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Salva ID dashboard creata",
+									"if (pm.response.code === 201) {",
+									"    var responseJson = pm.response.json();",
+									"    pm.environment.set(\"new_dashboard_id\", responseJson.id);",
+									"    console.log(\"Dashboard created with ID: \" + responseJson.id);",
+									"}",
+									"",
+									"pm.test(\"Dashboard created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    pm.expect(pm.response.json().id).to.be.a('number');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"dashboard_title\": \"Test Dashboard - {{$timestamp}}\",\n    \"published\": false\n}"
+						},
+						"url": {
+							"raw": "{{superset_url}}/api/v1/dashboard/",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"dashboard",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Dashboard Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{superset_url}}/api/v1/dashboard/{{dashboard_id}}",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"dashboard",
+								"{{dashboard_id}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "6. Verifica e Test",
+			"item": [
+				{
+					"name": "Get Dataset Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{superset_url}}/api/v1/dataset/{{dataset_id}}",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"dataset",
+								"{{dataset_id}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Chart Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{superset_url}}/api/v1/chart/{{chart_id}}",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"chart",
+								"{{chart_id}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Test SQL Query",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"database_id\": {{database_id}},\n    \"sql\": \"SELECT COUNT(*) as total_records FROM {{table_name}} LIMIT 10\",\n    \"runAsync\": false,\n    \"schema\": null\n}"
+						},
+						"url": {
+							"raw": "{{superset_url}}/api/v1/sqllab/execute/",
+							"host": [
+								"{{superset_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"sqllab",
+								"execute",
+								""
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-refresh token se non presente",
+					"if (!pm.environment.get(\"access_token\") && pm.request.url.toString().indexOf(\"/login\") === -1) {",
+					"    console.log(\"Access token missing, please run Login request first\");",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Test globale per autenticazione",
+					"if (pm.request.url.toString().indexOf(\"/login\") === -1) {",
+					"    pm.test(\"Request authenticated\", function () {",
+					"        pm.expect(pm.response.code).to.not.equal(401);",
+					"    });",
+					"}",
+					"",
+					"// Log errori per debug",
+					"if (pm.response.code >= 400) {",
+					"    console.log(\"Error \" + pm.response.code + \": \" + pm.response.text());",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "superset_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "admin",
+			"type": "string"
+		},
+		{
+			"key": "password",
+			"value": "admin",
+			"type": "string"
+		}
+	]
+}
