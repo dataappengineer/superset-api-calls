@@ -1,26 +1,32 @@
-# Superset API Calls
+# Chiamate API Superset
 
-This repository contains documentation and PowerShell scripts for working with Apache Superset APIs.
+Questo repository contiene documentazione e script PowerShell per lavorare con le API di Apache Superset.
 
-## Structure
+## Struttura
 
-- **docs/**: API reference documentation
+- **docs/**: Documentazione di riferimento API
   - API_Chart_Creation_Reference.md
   - Dashboard_API_Reference.md
   - Dataset_API_Reference.md
   - Datasource_Types_Reference.md
 
-- **PowershellApiCalls/**: PowerShell scripts and utilities
-  - Various PowerShell scripts for API interactions
-  - Python utilities for Superset API calls
-  - Jupyter notebook for modular API testing
+- **PowershellApiCalls/**: Script PowerShell e utility
+  - Vari script PowerShell per interazioni API
+  - Utility Python per chiamate API Superset
+  - Notebook Jupyter per test API modulari
 
-## Usage
+- **PostmanGuides/**: Guide ed esempi Postman
+  - Esempi di chiamate API Postman equivalenti agli script PowerShell
+  - Configurazioni e collections per test API
 
-The PowerShell scripts provide modular functionality for interacting with Superset APIs, including:
-- Chart management
-- Dashboard operations
-- Dataset creation and management
-- Virtual dataset operations
+## Utilizzo
 
-Refer to the documentation in the `docs/` folder for detailed API reference information.
+Gli script PowerShell forniscono funzionalità modulari per interagire con le API Superset, incluso:
+- Gestione grafici
+- Operazioni dashboard
+- Creazione e gestione dataset
+- Operazioni dataset virtuali
+
+Le guide Postman offrono esempi pratici per testare le API usando Postman, con configurazioni equivalenti agli script PowerShell.
+
+Consultare la documentazione nella cartella `docs/` per informazioni dettagliate di riferimento API.
